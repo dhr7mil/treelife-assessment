@@ -74,5 +74,3 @@ The architecture is connector-based — adding support for Excel, SQL, or Google
 - "List all high priority deals"
 
 ---
-
-Once that's committed, shall I build the CSV connector to make it stronger?
