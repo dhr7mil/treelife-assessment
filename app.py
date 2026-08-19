@@ -2,12 +2,13 @@ import streamlit as st
 from connectors.hubspot import HubSpotConnector
 from connectors.pipedrive import PipedriveConnector
 from connectors.mock import MockConnector
+from connectors.csv_connector import CSVConnector
 from core.discovery import SchemaDiscovery
 from core.translator import QueryTranslator
 import json
 
 st.set_page_config(
-    page_title="Treelife AI — Business Data Layer",
+    page_title="Treelife AI - Business Data Layer",
     page_icon="🌿",
     layout="wide"
 )
@@ -160,6 +161,7 @@ st.markdown("""
     Semantic Business Data Layer &nbsp;·&nbsp;
     <span class="platform-badge">HubSpot</span>
     <span class="platform-badge">Pipedrive</span>
+    <span class="platform-badge">CSV / Excel</span>
     <span class="platform-badge">Mock Demo</span>
 </div>
 """, unsafe_allow_html=True)
@@ -182,7 +184,7 @@ col1, col2 = st.columns([1, 2])
 with col1:
     platform = st.selectbox(
         "Platform",
-        ["Mock Demo (no API key needed)", "HubSpot", "Pipedrive"],
+        ["Mock Demo (no API key needed)", "CSV / Excel Upload", "HubSpot", "Pipedrive"],
         label_visibility="collapsed"
     )
 
@@ -190,8 +192,14 @@ with col2:
     if platform == "Mock Demo (no API key needed)":
         st.markdown('<p style="color:#6b7280;font-size:0.85rem;padding-top:0.5rem">▶ Uses built-in messy demo data — no API key required</p>', unsafe_allow_html=True)
         api_key_input = ""
+        uploaded_file = None
+        groq_key = st.text_input("Your Groq API key", type="password", placeholder="gsk_...")
+    elif platform == "CSV / Excel Upload":
+        uploaded_file = st.file_uploader("Upload your CSV or Excel file", type=["csv", "xlsx", "xls"])
+        api_key_input = ""
         groq_key = st.text_input("Your Groq API key", type="password", placeholder="gsk_...")
     else:
+        uploaded_file = None
         api_key_input = st.text_input(
             f"{platform} API key",
             type="password",
@@ -214,6 +222,11 @@ if connect_clicked:
                     connector = HubSpotConnector(api_key_input)
                 elif platform == "Pipedrive":
                     connector = PipedriveConnector(api_key_input)
+                elif platform == "CSV / Excel Upload":
+                    if not uploaded_file:
+                        st.markdown('<div class="error-box">Please upload a CSV or Excel file first.</div>', unsafe_allow_html=True)
+                        st.stop()
+                    connector = CSVConnector(uploaded_file.read(), uploaded_file.name)
                 else:
                     connector = MockConnector()
 
